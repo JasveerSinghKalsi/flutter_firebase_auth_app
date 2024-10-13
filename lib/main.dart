@@ -1,34 +1,37 @@
-import 'package:baseapp/constants/routes.dart';
-import 'package:baseapp/services/auth/auth_service.dart';
+import 'package:flutter/material.dart';
+import 'package:baseapp/services/auth/firebase_auth_provider.dart';
+import 'package:baseapp/services/bloc/auth_bloc.dart';
+import 'package:baseapp/services/bloc/auth_event.dart';
+import 'package:baseapp/services/bloc/auth_state.dart';
+import 'package:baseapp/utils/helpers/loading_screen.dart';
 import 'package:baseapp/views/app/app_view.dart';
 import 'package:baseapp/views/sign/create_account_view.dart';
 import 'package:baseapp/views/sign/forgot_password_view.dart';
 import 'package:baseapp/views/sign/login_view.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(MaterialApp(
-    debugShowCheckedModeBanner: false,
-    title: 'Base App',
-    theme: ThemeData.dark(
-      useMaterial3: true,
-    ).copyWith(
-      appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          titleTextStyle: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          )),
+  runApp(
+    MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Base App',
+      theme: ThemeData.dark(
+        useMaterial3: true,
+      ).copyWith(
+        appBarTheme: const AppBarTheme(
+            centerTitle: true,
+            titleTextStyle: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            )),
+      ),
+      home: BlocProvider(
+        create: (context) => AuthBloc(FirebaseAuthProvider()),
+        child: const HomePage(),
+      ),
     ),
-    home: const HomePage(),
-    routes: {
-      loginViewRoute: (context) => const LoginView(),
-      createAccountViewRoute: (context) => const CreateAccountView(),
-      forgotPasswordViewRoute: (context) => const ForgotPasswordView(),
-      appViewRoute: (context) => const AppView(),
-    },
-  ));
+  );
 }
 
 class HomePage extends StatelessWidget {
@@ -36,23 +39,30 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: AuthService.firebase().initialize(),
-      builder: (context, snapshot) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.done:
-            final user = AuthService.firebase().currentUser;
-            if (user != null && user.isEmailVerified) {
-              return const AppView();
-            } else {
-              return const LoginView();
-            }
+    context.read<AuthBloc>().add(const AuthEventInitialize());
+    return BlocConsumer<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state.isLoading) {
+          LoadingScreen()
+              .show(context: context, text: state.loadingText ?? 'Loading');
+        } else {
+          LoadingScreen().hide();
+        }
+      },
+      builder: (context, state) {
+        switch (state) {
+          case AuthStateLoggedIn():
+            return const AppView();
+          case AuthStateNeedsVerification():
+          case AuthStateLoggedOut():
+            return const LoginView();
+          case AuthStateCreatingAccount():
+            return const CreateAccountView();
+          case AuthStateForgotPassword():
+            return const ForgotPasswordView();
           default:
             return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
+                body: Center(child: CircularProgressIndicator()));
         }
       },
     );

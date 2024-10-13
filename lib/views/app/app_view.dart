@@ -1,8 +1,9 @@
-import 'package:baseapp/constants/routes.dart';
+import 'package:baseapp/services/bloc/auth_bloc.dart';
+import 'package:baseapp/services/bloc/auth_event.dart';
 import 'package:baseapp/utils/dialogs/logout_dialog.dart';
 import 'package:baseapp/utils/enums/menu_actions.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AppView extends StatefulWidget {
   const AppView({super.key});
@@ -21,18 +22,6 @@ class _AppViewState extends State<AppView> {
         title: const Text('App'),
         actions: [
           PopupMenuButton<MenuAction>(
-            onSelected: (value) async {
-              switch (value) {
-                case MenuAction.logout:
-                  final shouldLogout = await showLogOutDialog(context);
-                  if (shouldLogout && context.mounted) {
-                    FirebaseAuth.instance.signOut();
-                    Navigator.of(context)
-                        .pushNamedAndRemoveUntil(loginViewRoute, (_) => false);
-                  }
-                default:
-              }
-            },
             itemBuilder: (context) {
               return const [
                 PopupMenuItem<MenuAction>(
@@ -40,6 +29,15 @@ class _AppViewState extends State<AppView> {
                   child: Text('Logout'),
                 ),
               ];
+            },
+            onSelected: (value) async {
+              switch (value) {
+                case MenuAction.logout:
+                  final shouldLogout = await showLogOutDialog(context);
+                  if (shouldLogout && context.mounted) {
+                    context.read<AuthBloc>().add(const AuthEventLogout());
+                  }
+              }
             },
           )
         ],
