@@ -1,6 +1,6 @@
-# Base App
+#  Flutter Base App
 
-A cookbook for creating a base for an application where authentication methods are configured using Firebase and Flutter Bloc
+This project is for creating authentication methods for an application using Firebase and Flutter Bloc
 
 ## Firebase
 
@@ -8,7 +8,7 @@ In this project, Firebase is used to configure the authentication methods to log
 
 ## Flutter Bloc
 
-Bloc State Management is used to separate the business logic from the application UI. Credits to https://github.com/vandadnp for creating the best flutter bloc state management course.
+Bloc State Management is used to separate the business logic from the application UI and migrating between pages. Credits to https://github.com/vandadnp for creating the best flutter bloc state management course.
 
 ## Application UI and Theme
 
