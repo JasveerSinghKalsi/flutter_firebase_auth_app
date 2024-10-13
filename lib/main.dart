@@ -1,14 +1,13 @@
 import 'package:baseapp/constants/routes.dart';
-import 'package:baseapp/firebase_options.dart';
+import 'package:baseapp/services/auth/auth_service.dart';
 import 'package:baseapp/views/app/app_view.dart';
 import 'package:baseapp/views/sign/create_account_view.dart';
 import 'package:baseapp/views/sign/forgot_password_view.dart';
 import 'package:baseapp/views/sign/login_view.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     title: 'Base App',
@@ -38,14 +37,12 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      ),
+      future: AuthService.firebase().initialize(),
       builder: (context, snapshot) {
         switch (snapshot.connectionState) {
           case ConnectionState.done:
-            final user = FirebaseAuth.instance.currentUser;
-            if (user != null && user.emailVerified) {
+            final user = AuthService.firebase().currentUser;
+            if (user != null && user.isEmailVerified) {
               return const AppView();
             } else {
               return const LoginView();

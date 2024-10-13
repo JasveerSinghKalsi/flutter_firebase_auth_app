@@ -1,11 +1,12 @@
-import 'package:baseapp/utils/dialogs/error_dialog.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:baseapp/services/auth/auth_exceptions.dart';
+import 'package:baseapp/services/auth/auth_service.dart';
 import 'package:baseapp/constants/routes.dart';
 import 'package:baseapp/theme/palette.dart';
+import 'package:baseapp/utils/dialogs/error_dialog.dart';
 import 'package:baseapp/utils/dialogs/need_verification_dialog.dart';
 import 'package:baseapp/utils/widgets/auth_text_field.dart';
 import 'package:baseapp/utils/widgets/gradient_button.dart';
-import 'package:flutter/material.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -62,7 +63,7 @@ class _LoginViewState extends State<LoginView> {
               AuthTextField(
                 controller: _password,
                 hintText: 'Password',
-                prefixIcon: Icons.email,
+                prefixIcon: Icons.lock,
                 obscureText: true,
                 keyboardType: TextInputType.visiblePassword,
               ),
@@ -79,38 +80,32 @@ class _LoginViewState extends State<LoginView> {
                   final password = _password.text;
 
                   try {
-                    await FirebaseAuth.instance.signInWithEmailAndPassword(
+                    await AuthService.firebase().login(
                       email: email,
                       password: password,
                     );
-                    final user = FirebaseAuth.instance.currentUser;
+                    final user = AuthService.firebase().currentUser;
                     if (context.mounted) {
-                      if (user?.emailVerified ?? false) {
+                      if (user?.isEmailVerified ?? false) {
                         Navigator.of(context).pushNamedAndRemoveUntil(
                             appViewRoute, (route) => false);
                       } else {
                         final shouldResendVerifyEmail =
                             await showNeedVerficationDialog(context);
                         if (shouldResendVerifyEmail) {
-                          user?.sendEmailVerification();
+                          AuthService.firebase().sendEmailverification();
                         } else {
-                          FirebaseAuth.instance.signOut();
+                          AuthService.firebase().logout();
                         }
                       }
                     }
-                  } on FirebaseAuthException catch (e) {
+                  } on InvalidCredentialsAuthException {
                     if (context.mounted) {
-                      switch (e.code) {
-                        case 'invalid-credential':
-                          await showErrorDialog(
-                              context, 'Invalid Crendentials');
-                        default:
-                          await showErrorDialog(context, 'Error: ${e.code}');
-                      }
+                      await showErrorDialog(context, 'Invalid Credentials');
                     }
-                  } catch (e) {
+                  } on GenericAuthException {
                     if (context.mounted) {
-                      await showErrorDialog(context, e.toString());
+                      await showErrorDialog(context, 'Authentication Error');
                     }
                   }
                 },

@@ -1,11 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:baseapp/constants/routes.dart';
+import 'package:baseapp/services/auth/auth_exceptions.dart';
+import 'package:baseapp/services/auth/auth_service.dart';
 import 'package:baseapp/theme/palette.dart';
 import 'package:baseapp/utils/dialogs/error_dialog.dart';
 import 'package:baseapp/utils/dialogs/sent_verify_email.dart';
 import 'package:baseapp/utils/widgets/auth_text_field.dart';
 import 'package:baseapp/utils/widgets/gradient_button.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 
 class CreateAccountView extends StatefulWidget {
   const CreateAccountView({super.key});
@@ -73,7 +74,7 @@ class _CreateAccountViewState extends State<CreateAccountView> {
               AuthTextField(
                 controller: _password,
                 hintText: 'Password',
-                prefixIcon: Icons.email,
+                prefixIcon: Icons.lock,
                 obscureText: true,
                 keyboardType: TextInputType.visiblePassword,
               ),
@@ -81,7 +82,7 @@ class _CreateAccountViewState extends State<CreateAccountView> {
               AuthTextField(
                 controller: _confirmPassword,
                 hintText: 'Confirm Password',
-                prefixIcon: Icons.email,
+                prefixIcon: Icons.lock,
                 obscureText: true,
                 keyboardType: TextInputType.visiblePassword,
                 suffixIcon: _isPasswordMatched && _password.text.isNotEmpty
@@ -104,42 +105,39 @@ class _CreateAccountViewState extends State<CreateAccountView> {
                   final password = _password.text;
 
                   try {
-                    if (_isPasswordMatched) {
-                      await FirebaseAuth.instance
-                          .createUserWithEmailAndPassword(
+                    if (!_isPasswordMatched) {
+                      showErrorDialog(context, 'The passwords does not match');
+                    } else {
+                      await AuthService.firebase().createUser(
                         email: email,
                         password: password,
                       );
-                      final user = FirebaseAuth.instance.currentUser;
-                      await user?.sendEmailVerification();
-
+                      await AuthService.firebase().sendEmailverification();
                       if (context.mounted) {
-                        final shouldLogout =
+                        final shouldGoToLogin =
                             await showSentVerifyEmailDialog(context);
-                        if (shouldLogout && context.mounted) {
+                        if (shouldGoToLogin && context.mounted) {
                           Navigator.of(context).pushNamedAndRemoveUntil(
                               loginViewRoute, (route) => false);
                         }
                       }
                     }
-                  } on FirebaseAuthException catch (e) {
+                  } on WeakPasswordAuthException {
                     if (context.mounted) {
-                      switch (e.code) {
-                        case 'weak-password':
-                          await showErrorDialog(context, 'Weak Password');
-                        case 'email-already-in-user':
-                          await showErrorDialog(
-                              context, 'Email is already in use');
-                        case 'invalid-email':
-                          await showErrorDialog(context, 'Invalid email');
-                        default:
-                          await showErrorDialog(context,
-                              'Failed to create account. Error ${e.code}');
-                      }
+                      await showErrorDialog(context, 'Weak Password');
                     }
-                  } catch (e) {
+                  } on EmailAlreadyInUseAuthException {
                     if (context.mounted) {
-                      await showErrorDialog(context, e.toString());
+                      await showErrorDialog(context, 'Email is already in use');
+                    }
+                  } on InvalidEmailAuthException {
+                    if (context.mounted) {
+                      await showErrorDialog(context, 'Invalid email');
+                    }
+                  } on GenericAuthException {
+                    if (context.mounted) {
+                      await showErrorDialog(
+                          context, 'Failed to create account');
                     }
                   }
                 },

@@ -1,9 +1,10 @@
+import 'package:baseapp/services/auth/auth_exceptions.dart';
+import 'package:baseapp/services/auth/auth_service.dart';
+import 'package:flutter/material.dart';
 import 'package:baseapp/constants/routes.dart';
+import 'package:baseapp/theme/palette.dart';
 import 'package:baseapp/utils/dialogs/error_dialog.dart';
 import 'package:baseapp/utils/dialogs/password_reset_email_sent_dialog.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:baseapp/theme/palette.dart';
 import 'package:baseapp/utils/widgets/auth_text_field.dart';
 import 'package:baseapp/utils/widgets/gradient_button.dart';
 
@@ -70,24 +71,18 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                       );
                     } else {
                       try {
-                        await FirebaseAuth.instance
-                            .sendPasswordResetEmail(email: email);
+                        await AuthService.firebase()
+                            .sendPasswordReset(email: email);
                         if (context.mounted) {
-                          showPasswordResetSentDialog(context);
+                          await showPasswordResetSentDialog(context);
                         }
-                      } on FirebaseAuthException catch (e) {
+                      } on InvalidEmailAuthException {
                         if (context.mounted) {
-                          switch (e.code) {
-                            case 'invalid-email':
-                              await showErrorDialog(context, 'Invalid Email');
-                            default:
-                              await showErrorDialog(
-                                  context, 'an error occured');
-                          }
+                          await showErrorDialog(context, 'Invalid Email');
                         }
-                      } catch (e) {
+                      } on GenericAuthException {
                         if (context.mounted) {
-                          await showErrorDialog(context, e.toString());
+                          await showErrorDialog(context, 'An error occured');
                         }
                       }
                     }
