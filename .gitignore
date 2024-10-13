@@ -49,3 +49,5 @@ app.*.map.json
 /windows
 pubspec.lock
 .metadata
+lib/firebase_options.dart
+firebase.json
