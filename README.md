@@ -8,7 +8,7 @@ In this project, Firebase is used to configure the authentication methods to log
 
 ## Flutter Bloc
 
-Bloc State Management is used to separate the business logic from the application UI and migrating between pages. Credits to https://github.com/vandadnp for creating the best flutter bloc state management course.
+Bloc State Management is used to separate the business logic from the application UI and migrating between pages. Credits to https://github.com/vandadnp for creating the best flutter courses.
 
 ## Application UI and Theme
 
