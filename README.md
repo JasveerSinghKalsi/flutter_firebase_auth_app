@@ -1,6 +1,6 @@
-#  Flutter Base App
+#  Flutter Firebase Auth App
 
-This project is for creating authentication methods for an application using Firebase and Flutter Bloc
+This project is for creating authentication methods for an application using Firebase and Flutter Bloc State Management
 
 ## Firebase
 
